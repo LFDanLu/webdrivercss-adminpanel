@@ -9,3 +9,5 @@ dist
 repositories
 
 npm-debug.log
+*.png
+*.gz
