@@ -25,23 +25,36 @@ exports.syncImages = function(req, res) {
     }
 
     fs.readFile(req.files.gz.path, function(err, data) {
-        var newPath = path.join(imageRepo, req.files.gz.name);
-
-        fs.remove(newPath.replace(/\.tar\.gz/, ''), function(err) {
-            if (err) {
+        //Modified the api call that webdrivercss sends upon file sync to include local diff repository file/folder structure in the POST req url
+        //adding it to newPath so that the admin panel repository folder structure creates the same folder structure
+        //removes the leading "api/repositories" and the trailing file name since imageRepo and files.gz.name has those covered
+        var subfolderStructure = path.join(imageRepo, req.url.replace(/(.*\/).*$/,"$1").replace(/\/api\/repositories\//,""))
+        var newPath = path.join(subfolderStructure, req.files.gz.name);
+        console.log(imageRepo+ "Image repo")
+        console.log(req.url+ "THIS IS thE ORIGINAL POSt REQUEST URL")
+        console.log(newPath)
+        //creates path if it doesn't exist
+        fs.ensureDir(newPath.replace(/\.tar\.gz/, ''), function(err) {
+            if (err){
                 throw err;
             }
-
-            fs.writeFile(newPath, data, function(err) {
+            fs.remove(newPath.replace(/\.tar\.gz/, ''), function(err) {
                 if (err) {
-                    throw (err);
+                    throw err;
                 }
 
-                new targz().extract(newPath, imageRepo);
-                res.send(200);
-            });
+                fs.writeFile(newPath, data, function(err) {
+                    if (err) {
+                        throw (err);
+                    }
 
-        });
+                    new targz().extract(newPath, subfolderStructure);
+                    res.send(200);
+                });
+
+            });
+        })
+        
     });
 
 };
